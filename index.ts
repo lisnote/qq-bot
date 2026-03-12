@@ -17,12 +17,14 @@ function connect() {
   ws = new WebSocket(`${process.env.HOST}?access_token=${process.env.ACCESS_TOKEN}`);
   ws.onopen = () => logger.debug('成功连接到 NapCat 服务');
   ws.onmessage = (event) => {
-    logger.info(event.data);
     try {
       const data = JSON.parse(event.data);
+      if (data.meta_event_type !== 'heartbeat') {
+        logger.info(event.data);
+      }
       emitter.emit(`${data.message_type && data.message_type + '.'}${data.post_type ?? ''}`, data);
     } catch (e) {
-      logger.error('解析消息失败', e);
+      logger.error('解析消息失败', e, event.data);
     }
   };
   ws.onclose = (code) => logger.error(`连接已断开，状态码: ${code.code}，原因: ${code.reason}`);
