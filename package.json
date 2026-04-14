@@ -1,0 +1,23 @@
+{
+  "name": "qq-bot",
+  "module": "index.ts",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.4.0",
+    "nodemon": "^3.1.14"
+  },
+  "peerDependencies": {
+    "typescript": "5.9.3"
+  },
+  "private": true,
+  "scripts": {
+    "dev": "nodemon -e ts --exec \"bun index.ts\"",
+    "start": "bun index.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "dayjs": "^1.11.19",
+    "node-napcat-ts": "^0.4.25",
+    "rotating-file-stream": "^3.2.9"
+  }
+}
