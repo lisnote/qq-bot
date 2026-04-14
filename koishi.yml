@@ -1,0 +1,109 @@
+plugins:
+  group:server:
+    server:6fmty1:
+      port: 5140
+      maxPort: 5149
+    ~server-satori:fi92kc: {}
+    ~server-temp:sff3gv: {}
+  group:basic:
+    ~admin:nbajti: {}
+    ~bind:ox6g07: {}
+    commands:1vq9f7:
+      clear:
+        aliases:
+          clear:
+            filter: false
+      command:
+        aliases:
+          command:
+            filter: false
+      help:
+        aliases:
+          help:
+            filter: false
+      plugin:
+        aliases:
+          plugin:
+            filter: false
+      status:
+        aliases:
+          status:
+            filter: false
+      timer:
+        aliases:
+          timer:
+            filter: false
+      usage:
+        aliases:
+          usage:
+            filter: false
+    help:1whe1j: {}
+    http:o3fyat: {}
+    ~inspect:1jmeu8: {}
+    locales:eepx6m: {}
+    proxy-agent:mzv72s: {}
+    rate-limit:6dgjl7: {}
+    telemetry:902hnu: {}
+  group:console:
+    actions:mt9c7x: {}
+    analytics:l8jxnt: {}
+    android:dl7iyh:
+      $if: env.KOISHI_AGENT?.includes('Android')
+    ~auth:bwbg7n: {}
+    config:v5n84f: {}
+    console:7p49md:
+      open: true
+    dataview:0dvx2w: {}
+    desktop:f3t8do:
+      $if: env.KOISHI_AGENT?.includes('Desktop')
+    explorer:im5rz7: {}
+    logger:7gayrd: {}
+    insight:eh3c2a: {}
+    market:2j735l:
+      search:
+        endpoint: https://registry.koishi.chat/index.json
+    notifier:6ig362: {}
+    oobe:umtr7n: {}
+    sandbox:uzoenh: {}
+    status:stvoge: {}
+    theme-vanilla:nvrkos: {}
+  group:storage:
+    ~database-mongo:lo6et2:
+      database: koishi
+    ~database-mysql:wdwhss:
+      database: koishi
+    ~database-postgres:yrc4tn:
+      database: koishi
+    database-sqlite:0872sl:
+      path: data/koishi.db
+    assets-local:gx2ali: {}
+  group:adapter:
+    ~adapter-dingtalk:ao8kho: {}
+    ~adapter-discord:7xsay8: {}
+    ~adapter-kook:1b8uyg: {}
+    ~adapter-lark:pf7lp0: {}
+    ~adapter-line:diajln: {}
+    ~adapter-mail:tu96o4: {}
+    ~adapter-matrix:7q8sti: {}
+    ~adapter-qq:cnev8i: {}
+    ~adapter-satori:o2e0s2: {}
+    ~adapter-slack:ktiwvs: {}
+    ~adapter-telegram:xy0s83: {}
+    ~adapter-wechat-official:zwgor1: {}
+    ~adapter-wecom:qozh1g: {}
+    ~adapter-whatsapp:kb02w3: {}
+    ~adapter-zulip:bgrt23: {}
+  group:develop:
+    $if: env.NODE_ENV === 'development'
+    hmr:90m3sr:
+      root: .
+  adapter-onebot:iff6b8:
+    selfId: '2794464637'
+    token: ${{ env.ONEBOT_WS_TOKEN }}
+    protocol: ws
+    endpoint: ${{ env.ONEBOT_WS_URL }}
+    keepAlive: true
+  ai-chat:toa1ga: {}
+prefixMode: strict
+prefix:
+  - $
