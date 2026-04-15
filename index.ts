@@ -84,4 +84,9 @@ napcat.on('message', async (data) => {
     .catch((e) => logger.error(e));
 });
 
+// 自动同意好友请求
+napcat.on('request.friend', (data) => {
+  napcat.set_friend_add_request({ flag: data.flag, approve: true });
+});
+
 logger.debug('QQ机器人启动成功');
