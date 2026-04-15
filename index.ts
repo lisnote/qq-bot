@@ -55,19 +55,31 @@ napcat.on('message', async (data) => {
     .map((item) => item.data.text)
     .join(' ');
   if (!text) return;
-  aiChat
+  await aiChat
     .ask(data.user_id.toString(), data.sender.nickname, text)
-    .then((answer) => {
-      const message: SendMessageSegment[] = [Structs.text(answer.text)];
+    .then(async (answer) => {
+      const message: SendMessageSegment[] = answer.text
+        .split(/[。？(……)\n]/)
+        .filter((v) => v.trim())
+        .map((v) => Structs.text(v));
       const emoji = emojiEmotionMap.get(answer.emoji);
       if (emoji) {
         message.push(Structs.image(emoji.url));
       }
-      napcat.send_msg({
-        group_id: data.message_type === 'group' ? data.group_id : undefined,
-        user_id: data.user_id,
-        message,
-      });
+      for (const i in message) {
+        const index = Number(i);
+        const msg = message[index];
+        napcat.send_msg({
+          group_id: data.message_type === 'group' ? data.group_id : undefined,
+          user_id: data.user_id,
+          message: [msg],
+        });
+        const nextMsg = message[index + 1];
+        if (nextMsg?.type === 'text') {
+          const delay = nextMsg.data.text.length * (Math.random() * 100 + 100);
+          await Bun.sleep(delay);
+        }
+      }
     })
     .catch((e) => logger.error(e));
 });
