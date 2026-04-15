@@ -1,6 +1,7 @@
 import { NCWebsocket, Structs } from '@/utils/napcat';
-import AiChat from './utils/aichat';
-import logger from './utils/logger';
+import AiChat from '@/utils/aichat';
+import logger from '@/utils/logger';
+import { filter } from '@/utils/filter';
 
 const aiChat = await AiChat.create({ sqlitePath: './data/data.db' });
 const napcat = new NCWebsocket({
@@ -12,6 +13,12 @@ const napcat = new NCWebsocket({
 await napcat.connect();
 
 napcat.on('message', async (data) => {
+  logger.info({
+    ...(data.message_type === 'group' ? { groupId: data.group_id } : {}),
+    userId: data.user_id,
+    rawMessage: data.raw_message,
+  });
+  if (!filter(data)) return;
   if (data.message[0].type === 'text' && data.message[0].data.text.startsWith('/prompt ')) {
     const prompt = data.message[0].data.text.replace('/prompt ', '');
     await aiChat.setPrompt(data.user_id.toString(), prompt);
