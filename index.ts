@@ -62,7 +62,7 @@ napcat.on('message', async (data) => {
         .split(/[。？(……)\n]/)
         .filter((v) => v.trim())
         .map((v) => Structs.text(v));
-      const emoji = emojiEmotionMap.get(answer.emoji);
+      const emoji = emojiEmotionMap.get(answer.emoji ?? '');
       if (emoji) {
         message.push(Structs.image(emoji.url));
       }

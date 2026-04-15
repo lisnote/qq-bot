@@ -126,7 +126,7 @@ export default class AiChat {
     memory: string,
     history: { question: string; answer: string }[],
     question: string,
-  ): Promise<{ text: string; emoji: string }> {
+  ): Promise<{ text: string; emoji?: string }> {
     prompt = prompt
       .replace('{{user}}', userName)
       .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
@@ -181,7 +181,11 @@ export default class AiChat {
       .then((text) => {
         logger.info('generateAnswer:', text);
         const json = JSON.parse(text);
-        return JSON.parse(json.choices[0].message.tool_calls[0].function.arguments);
+        if (json.choices[0].message.tool_calls?.[0]?.function?.arguments) {
+          return JSON.parse(json.choices[0].message.tool_calls[0].function.arguments);
+        } else {
+          return { text: json.choices[0].message.content };
+        }
       });
   }
 }
