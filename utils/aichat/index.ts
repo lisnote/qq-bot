@@ -93,7 +93,7 @@ export default class AiChat {
         Authorization: 'Bearer ' + process.env.AI_API_KEY!,
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: process.env.AI_MODEL_NAME!,
         messages: [
           { role: 'system', content: '# Memory\n\n' + memory },
           ...history
@@ -130,7 +130,7 @@ export default class AiChat {
         Authorization: 'Bearer ' + process.env.AI_API_KEY!,
       },
       body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+        model: process.env.AI_MODEL_NAME!,
         messages: [
           { role: 'system', content: `${prompt}\n\n# Memory\n\n${memory}` },
           ...history
