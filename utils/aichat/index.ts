@@ -72,11 +72,11 @@ export default class AiChat {
       WHERE id = ${userId}
     `;
   }
-  private async init(
-    userId: string,
-    prompt = defaultPrompt,
-    memory = '你刚刚才被创造出了, 没有任何记忆',
-  ) {
+  async clearMemory(userId: string) {
+    await this.sql`UPDATE user SET memory = '' WHERE id = ${userId}`;
+    await this.sql`DELETE FROM history WHERE userId = ${userId}`;
+  }
+  private async init(userId: string, prompt = defaultPrompt, memory = '') {
     const data = await this.sql`
       INSERT OR IGNORE INTO user (id, prompt, memory)
       VALUES (${userId}, ${prompt}, ${memory})
