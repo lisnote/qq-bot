@@ -4,6 +4,7 @@ import { dirname } from 'path';
 import defaultPrompt from './prompt.md' with { type: 'text' };
 import logger from '@/utils/logger';
 import dayjs from '@/utils/date';
+import { emojiEmotionList } from './emoji';
 
 export default class AiChat {
   private sql: SQL;
@@ -60,7 +61,7 @@ export default class AiChat {
     // 保存回答
     await this.sql`
       INSERT INTO history (userId, question, answer, time)
-      VALUES (${userId}, ${question}, ${answer}, ${new Date().toISOString()})
+      VALUES (${userId}, ${question}, ${answer.text}, ${new Date().toISOString()})
     `;
     // 返回回答
     return answer;
@@ -125,7 +126,7 @@ export default class AiChat {
     memory: string,
     history: { question: string; answer: string }[],
     question: string,
-  ): Promise<string> {
+  ): Promise<{ text: string; emoji: string }> {
     prompt = prompt
       .replace('{{user}}', userName)
       .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
@@ -151,6 +152,28 @@ export default class AiChat {
             .flat(),
           { role: 'user', content: question },
         ],
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: 'reply',
+              description: '回复用户',
+              parameters: {
+                type: 'object',
+                properties: {
+                  text: { type: 'string', description: '回复用户的文字文本' },
+                  emoji: {
+                    type: 'string',
+                    description: '回复用户的聊天表情',
+                    enum: emojiEmotionList,
+                  },
+                },
+                required: ['text'],
+              },
+            },
+          },
+        ],
+        tool_choice: { type: 'function', function: { name: 'reply' } },
         stream: false,
       }),
     })
@@ -158,7 +181,7 @@ export default class AiChat {
       .then((text) => {
         logger.info('generateAnswer:', text);
         const json = JSON.parse(text);
-        return json.choices[0].message.content;
+        return JSON.parse(json.choices[0].message.tool_calls[0].function.arguments);
       });
   }
 }

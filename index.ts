@@ -1,8 +1,9 @@
-import { NCWebsocket, Structs } from '@/utils/napcat';
+import { NCWebsocket, SendMessageSegment, Structs } from '@/utils/napcat';
 import logger from '@/utils/logger';
 import { filter } from '@/utils/filter';
 import { CommandContext } from './types';
 import AiChat from '@/utils/aichat';
+import { emojiEmotionMap } from './utils/aichat/emoji';
 
 const aiChat = await AiChat.create({ sqlitePath: './data/data.db' });
 const napcat = new NCWebsocket({
@@ -57,10 +58,15 @@ napcat.on('message', async (data) => {
   aiChat
     .ask(data.user_id.toString(), data.sender.nickname, text)
     .then((answer) => {
+      const message: SendMessageSegment[] = [Structs.text(answer.text)];
+      const emoji = emojiEmotionMap.get(answer.emoji);
+      if (emoji) {
+        message.push(Structs.image(emoji.url));
+      }
       napcat.send_msg({
         group_id: data.message_type === 'group' ? data.group_id : undefined,
         user_id: data.user_id,
-        message: [Structs.text(answer)],
+        message,
       });
     })
     .catch((e) => logger.error(e));
