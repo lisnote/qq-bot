@@ -65,3 +65,5 @@ napcat.on('message', async (data) => {
     })
     .catch((e) => logger.error(e));
 });
+
+logger.debug('QQ机器人启动成功');
