@@ -55,7 +55,7 @@ napcat.on('message', async (data) => {
     .join(' ');
   if (!text) return;
   aiChat
-    .ask(data.user_id.toString(), text)
+    .ask(data.user_id.toString(), data.sender.nickname, text)
     .then((answer) => {
       napcat.send_msg({
         group_id: data.message_type === 'group' ? data.group_id : undefined,

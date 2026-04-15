@@ -2,7 +2,8 @@ import { SQL } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import defaultPrompt from './prompt.md' with { type: 'text' };
-import logger from '../logger';
+import logger from '@/utils/logger';
+import dayjs from '@/utils/date';
 
 export default class AiChat {
   private sql: SQL;
@@ -29,7 +30,7 @@ export default class AiChat {
     `;
     return aiChat;
   }
-  async ask(userId: string, question: string) {
+  async ask(userId: string, userName: string, question: string) {
     // 获取用户设置
     let userConfig = await this.sql`SELECT id, prompt, memory FROM user WHERE id = ${userId}`;
     if (userConfig.length === 0) {
@@ -55,7 +56,7 @@ export default class AiChat {
       `;
     }
     // 生成回答
-    const answer = await this.generateAnswer(prompt, memory, history, question);
+    const answer = await this.generateAnswer(userName, prompt, memory, history, question);
     // 保存回答
     await this.sql`
       INSERT INTO history (userId, question, answer, time)
@@ -119,11 +120,15 @@ export default class AiChat {
       });
   }
   private async generateAnswer(
+    userName: string,
     prompt: string,
     memory: string,
     history: { question: string; answer: string }[],
     question: string,
   ): Promise<string> {
+    prompt = prompt
+      .replace('{{user}}', userName)
+      .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
     return fetch(process.env.AI_BASE_URL!, {
       method: 'POST',
       headers: {
@@ -132,7 +137,12 @@ export default class AiChat {
       body: JSON.stringify({
         model: process.env.AI_MODEL_NAME!,
         messages: [
-          { role: 'system', content: `${prompt}\n\n# Memory\n\n${memory}` },
+          {
+            role: 'system',
+            content: `${prompt
+              .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'))
+              .replace('{{user}}', userName)}\n\n# Memory\n\n${memory}`,
+          },
           ...history
             .map((item) => [
               { role: 'user', content: item.question },
