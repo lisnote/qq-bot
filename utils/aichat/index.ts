@@ -44,7 +44,7 @@ export default class AiChat {
     `;
     // 聊天记录>100条, 压缩最早的50条到记忆
     if (history.length > 100) {
-      const newMemory = await this.compressMemory(userId, memory, history.slice(0, 50));
+      const newMemory = await this.compressMemory(memory, history.slice(0, 50));
       memory = newMemory;
       await this.sql`UPDATE user SET memory = ${memory} WHERE id = ${userId}`;
       await this.sql`
@@ -84,7 +84,6 @@ export default class AiChat {
     return { userId, prompt, memory };
   }
   private async compressMemory(
-    userId: string,
     memory: string,
     history: { question: string; answer: string }[],
   ): Promise<string> {
