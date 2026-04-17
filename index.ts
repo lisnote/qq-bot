@@ -5,7 +5,13 @@ import { CommandContext } from './types';
 import AiChat from '@/utils/aichat';
 import { emojiEmotionMap } from './utils/aichat/emoji';
 
-const aiChat = await AiChat.create({ sqlitePath: './data/data.db' });
+const aiChat = await AiChat.create({
+  sqlitePath: './data/data.db',
+  url: process.env.AI_BASE_URL!,
+  key: process.env.AI_API_KEY!,
+  model: process.env.AI_MODEL_NAME!,
+});
+
 const napcat = new NCWebsocket({
   host: process.env.HOST!,
   port: Number(process.env.PORT!),

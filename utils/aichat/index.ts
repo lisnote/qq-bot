@@ -7,13 +7,39 @@ import dayjs from '@/utils/date';
 import { emojiEmotionList } from './emoji';
 
 export default class AiChat {
+  private url: string;
+  private key: string;
+  private model: string;
   private sql: SQL;
-  private constructor({ sqlitePath }: { sqlitePath: string }) {
+  private constructor({
+    sqlitePath,
+    url,
+    key,
+    model,
+  }: {
+    sqlitePath: string;
+    url: string;
+    key: string;
+    model: string;
+  }) {
     this.sql = new SQL('sqlite://' + sqlitePath);
+    this.url = url;
+    this.key = key;
+    this.model = model;
   }
-  static async create({ sqlitePath }: { sqlitePath: string }) {
+  static async create({
+    sqlitePath,
+    url,
+    key,
+    model,
+  }: {
+    sqlitePath: string;
+    url: string;
+    key: string;
+    model: string;
+  }) {
     await mkdir(dirname(sqlitePath), { recursive: true }).catch(() => {});
-    const aiChat = new AiChat({ sqlitePath });
+    const aiChat = new AiChat({ sqlitePath, url, key, model });
     await aiChat.sql`
       CREATE TABLE IF NOT EXISTS user (
         id     TEXT PRIMARY KEY,
@@ -89,13 +115,13 @@ export default class AiChat {
     memory: string,
     history: { question: string; answer: string }[],
   ): Promise<string> {
-    return fetch(process.env.AI_BASE_URL!, {
+    return fetch(this.url, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer ' + process.env.AI_API_KEY!,
+        Authorization: 'Bearer ' + this.key,
       },
       body: JSON.stringify({
-        model: process.env.AI_MODEL_NAME!,
+        model: this.model,
         messages: [
           { role: 'system', content: '# Memory\n\n' + memory },
           ...history
@@ -130,13 +156,13 @@ export default class AiChat {
     prompt = prompt
       .replace('{{user}}', userName)
       .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
-    return fetch(process.env.AI_BASE_URL!, {
+    return fetch(this.url, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer ' + process.env.AI_API_KEY!,
+        Authorization: 'Bearer ' + this.key,
       },
       body: JSON.stringify({
-        model: process.env.AI_MODEL_NAME!,
+        model: this.model,
         messages: [
           {
             role: 'system',
