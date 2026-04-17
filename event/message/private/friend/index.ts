@@ -1,11 +1,9 @@
 import { EventContext } from '@/types';
 import { emojiEmotionMap } from '@/utils/aichat/emoji';
-import { filter } from '@/utils/filter';
 import logger from '@/utils/logger';
 import { SendMessageSegment, Structs } from '@/utils/napcat';
 
 export default async function ({ aiChat, napcat, data }: EventContext<'message.private.friend'>) {
-  if (!filter(data)) return;
   const text = data.message
     .filter((item) => item.type === 'text')
     .map((item) => item.data.text)
