@@ -154,8 +154,8 @@ export default class AiChat {
     question: string,
   ): Promise<{ text: string; emoji?: string }> {
     prompt = prompt
-      .replace('{{user}}', userName)
-      .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
+      .replaceAll('{{user}}', userName)
+      .replaceAll('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'));
     return fetch(this.url, {
       method: 'POST',
       headers: {
@@ -166,9 +166,7 @@ export default class AiChat {
         messages: [
           {
             role: 'system',
-            content: `${prompt
-              .replace('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'))
-              .replace('{{user}}', userName)}\n\n# Memory\n\n${memory}`,
+            content: prompt + '\n\n# Memory\n\n' + memory,
           },
           ...history
             .map((item) => [
