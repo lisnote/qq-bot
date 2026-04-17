@@ -72,14 +72,20 @@ export class NCEventBus {
     };
   }
 
-  emit<T extends EventKey>(event: T, context: HandlerResMap[T]): boolean {
+  emit<T extends EventKey>(event: T, context: HandlerResMap[T], sourceEvent?: string): boolean {
+    // 触发事件
     const handlers = (this.#events.get(event) as EventHandleMap[T][]) ?? [];
 
     for (const handler of handlers) handler(context);
 
-    // 触发总类
     const indexOf = event.lastIndexOf('.');
-    if (indexOf > 0) return this.emit(event.slice(0, indexOf) as EventKey, context);
+    if (indexOf > 0) {
+      // 触发父类
+      return this.emit(event.slice(0, indexOf) as EventKey, context, sourceEvent ?? event);
+    } else if (event !== '*') {
+      // 触发根类
+      return this.emit('*', { event: sourceEvent!, context }, sourceEvent);
+    }
 
     return true;
   }

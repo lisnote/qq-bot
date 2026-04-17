@@ -745,7 +745,7 @@ export type AllHandlers = SocketHandler &
   MessageSentHandler &
   MetaEventHandler &
   RequestHandler &
-  NoticeHandler;
+  NoticeHandler & { '*': { event: string; context: any } };
 
 export type WSReceiveHandler = MessageHandler &
   MessageSentHandler &
