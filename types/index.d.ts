@@ -7,17 +7,23 @@ import type {
   EventKey,
   HandlerResMap,
 } from '@/utils/napcat';
+import type logger from '@/utils/logger';
 
 export type EventContext<T extends EventKey = EventKey> = {
-  aiChat: AiChat;
+  event: EventKey;
   napcat: NCWebsocket;
   data: HandlerResMap[T];
+  aiChat: AiChat;
 };
 
-export type CommandContext = {
-  aiChat: AiChat;
-  napcat: NCWebsocket;
-  data: PrivateFriendMessage | PrivateGroupMessage | GroupMessage;
+export type CommandContext = EventContext<'message'> & {
   command: string;
   message: string;
 };
+
+export type Next = () => Promise<void>;
+
+export type Middleware<T extends EventKey = EventKey> = (
+  context: EventContext<T>,
+  next: Next,
+) => Promise<void>;
