@@ -1,9 +1,8 @@
-import { NCWebsocket, SendMessageSegment, Structs } from '@/utils/napcat';
+import { NCWebsocket } from '@/utils/napcat';
 import logger from '@/utils/logger';
 import { filter } from '@/utils/filter';
 import { CommandContext } from './types';
 import AiChat from '@/utils/aichat';
-import { emojiEmotionMap } from './utils/aichat/emoji';
 
 const aiChat = await AiChat.create({
   sqlitePath: './data/data.db',
@@ -18,10 +17,26 @@ const napcat = new NCWebsocket({
   protocol: 'ws',
   accessToken: process.env.TOKEN!,
 });
-await napcat.connect();
+// 事件处理
+napcat.on('*', async ({ event, context }) => {
+  let eventPath = event
+    .replaceAll('.', '/')
+    .replace(/_(\w)/g, (_match, letter) => letter.toUpperCase());
+  while (true) {
+    const module = await import(`@/event/${eventPath}`).catch(() => undefined);
+    if (module?.default) {
+      const EventContext = { napcat, data: context };
+      await module.default(EventContext)?.catch?.(logger.error);
+    }
+    const indexOf = eventPath.lastIndexOf('/');
+    if (indexOf === -1) break;
+    eventPath = eventPath.substring(0, indexOf);
+  }
+});
 
+// 命令处理
 napcat.on('message', async (data) => {
-  // 消息历史
+  // 消息日志
   logger.info({
     ...(data.message_type === 'group' ? { groupId: data.group_id } : {}),
     userId: data.user_id,
@@ -40,59 +55,13 @@ napcat.on('message', async (data) => {
       .trimStart();
     const module = await import(`@/command${command}`).catch(() => undefined);
     if (module?.default) {
-      try {
-        const commandContext: CommandContext = { aiChat, napcat, data, command, message };
-        await module.default(commandContext);
-      } catch (e) {
-        logger.error(e);
-      }
+      const commandContext: CommandContext = { aiChat, napcat, data, command, message };
+      await module.default(commandContext)?.catch?.(logger.error);
       return;
     }
   }
-  // Ai回复
-  if (
-    data.message_type === 'group' &&
-    !data.message.find((item) => item.type === 'at' && item.data.qq === data.self_id.toString())
-  ) {
-    return;
-  }
-  const text = data.message
-    .filter((item) => item.type === 'text')
-    .map((item) => item.data.text)
-    .join(' ');
-  if (!text) return;
-  await aiChat
-    .ask(data.user_id.toString(), data.sender.nickname, text)
-    .then(async (answer) => {
-      const message: SendMessageSegment[] = answer.text
-        .split(/[。？(……)\n]/)
-        .filter((v) => v.trim())
-        .map((v) => Structs.text(v));
-      const emoji = emojiEmotionMap.get(answer.emoji ?? '');
-      if (emoji) {
-        message.push(Structs.image(emoji.url));
-      }
-      for (const i in message) {
-        const index = Number(i);
-        const msg = message[index];
-        napcat.send_msg({
-          group_id: data.message_type === 'group' ? data.group_id : undefined,
-          user_id: data.user_id,
-          message: [msg],
-        });
-        const nextMsg = message[index + 1];
-        if (nextMsg?.type === 'text') {
-          const delay = nextMsg.data.text.length * (Math.random() * 100 + 100);
-          await Bun.sleep(delay);
-        }
-      }
-    })
-    .catch((e) => logger.error(e));
 });
 
-// 自动同意好友请求
-napcat.on('request.friend', (data) => {
-  napcat.set_friend_add_request({ flag: data.flag, approve: true });
-});
+await napcat.connect();
 
 logger.debug('QQ机器人启动成功');
