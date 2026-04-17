@@ -9,6 +9,7 @@ import type {
 } from '@/utils/napcat';
 
 export type EventContext<T extends EventKey = EventKey> = {
+  aiChat: AiChat;
   napcat: NCWebsocket;
   data: HandlerResMap[T];
 };

@@ -1,7 +1,7 @@
 import { NCWebsocket } from '@/utils/napcat';
 import logger from '@/utils/logger';
 import { filter } from '@/utils/filter';
-import { CommandContext } from './types';
+import { CommandContext, EventContext } from './types';
 import AiChat from '@/utils/aichat';
 
 const aiChat = await AiChat.create({
@@ -17,6 +17,7 @@ const napcat = new NCWebsocket({
   protocol: 'ws',
   accessToken: process.env.TOKEN!,
 });
+
 // 事件处理
 napcat.on('*', async ({ event, context }) => {
   let eventPath = event
@@ -25,7 +26,7 @@ napcat.on('*', async ({ event, context }) => {
   while (true) {
     const module = await import(`@/event/${eventPath}`).catch(() => undefined);
     if (module?.default) {
-      const EventContext = { napcat, data: context };
+      const EventContext: EventContext = { aiChat, napcat, data: context };
       await module.default(EventContext)?.catch?.(logger.error);
     }
     const indexOf = eventPath.lastIndexOf('/');
