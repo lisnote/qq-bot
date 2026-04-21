@@ -2,7 +2,7 @@ import { EventContext } from '@/types';
 import logger from '@/utils/logger';
 import { SendMessageSegment, Structs } from '@/utils/napcat';
 
-export default async function ({ aiChat, napcat, data }: EventContext<'message.private.friend'>) {
+export default async function ({ aiChat, napcat, data }: EventContext<'message.private'>) {
   const text = data.message
     .filter((item) => item.type === 'text')
     .map((item) => item.data.text)
