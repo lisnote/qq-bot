@@ -2,7 +2,7 @@ import { SQL } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import defaultPrompt from './prompt.md' with { type: 'text' };
-import { Message, Role } from './api';
+import { Role, TextContent, ImageContent, Message } from './api';
 import { MaybeArray } from '@/types/utils';
 
 export type User = { id: string; prompt: string; memory: string };
@@ -85,7 +85,7 @@ export class Sql {
     const [data] = await this.get('user', userId);
     return data;
   }
-  async insertHistory(userId: string, role: Role, content: Message['content']) {
+  async insertHistory(userId: string, role: Role, content: Array<TextContent | ImageContent>) {
     const [{ id }]: { id: number }[] = await this.sql`
       INSERT INTO history (userId, role)
       VALUES (${userId}, ${role})
@@ -122,23 +122,62 @@ export class Sql {
       await tx`DELETE FROM history WHERE userId = ${userId}`;
     });
   }
-  historyToMessages(rows: { historyId: number; role: Role; type: string; data: string }[]) {
-    const messages: Message[] = [];
-    let currentHistoryId: undefined | number = undefined;
-    for (const history of rows) {
-      if (history.historyId !== currentHistoryId) {
-        messages.push({ role: history.role, content: [] });
-        currentHistoryId = history.historyId;
-      }
-      messages[messages.length - 1].content.push(
-        history.type === 'text'
-          ? { type: 'text', text: history.data }
-          : {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/jpg', data: history.data },
-            },
-      );
-    }
+  historyToMessages(
+    rows: { historyId: number; role: Role; type: string; data: string }[],
+  ): Message[] {
+    const grouped = rows.reduce(
+      (pre, current, index) => {
+        if (
+          pre[pre.length - 1]?.[pre[pre.length - 1].length - 1]?.historyId === current.historyId
+        ) {
+          pre[pre.length - 1].push(current);
+        } else {
+          pre.push([current]);
+        }
+        return pre;
+      },
+      [] as { historyId: number; role: Role; type: string; data: string }[][],
+    );
+    const messages = grouped
+      .map((item) => {
+        if (item[0].role === 'user') {
+          return {
+            role: 'user',
+            content: item.map((v) => {
+              if (v.type === 'text') {
+                return { type: 'text', text: v.data } as TextContent;
+              } else {
+                return {
+                  type: 'image',
+                  source: { data: v.data, media_type: 'image/jpg', type: 'base64' },
+                } as ImageContent;
+              }
+            }),
+          } as Message;
+        } else {
+          return [
+            {
+              role: 'assistant',
+              tool_calls: [
+                {
+                  id: 'call_' + item[0].historyId,
+                  type: 'function',
+                  function: {
+                    name: 'reply',
+                    arguments: JSON.stringify({
+                      content: item.map((v) => {
+                        return { type: v.type === 'text' ? 'text' : 'imageUrl', content: v.data };
+                      }),
+                    }),
+                  },
+                },
+              ],
+            } as Message,
+            { role: 'tool', tool_call_id: 'call_' + item[0].historyId } as Message,
+          ];
+        }
+      })
+      .flat();
     return messages;
   }
 }

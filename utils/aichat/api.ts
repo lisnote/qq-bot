@@ -1,16 +1,25 @@
 import dayjs from '@/utils/date';
 import logger from '@/utils/logger';
 
-export type Role = 'system' | 'user' | 'assistant';
+export type Role = 'system' | 'user' | 'assistant' | 'tool';
 export type TextContent = { type: 'text'; text: string };
 export type ImageContent = {
   type: 'image';
   source: { type: 'base64'; media_type: 'image/jpg'; data: string };
 };
-export type Message = { role: Role; content: Array<TextContent | ImageContent> };
+export type Message = {
+  role: Role;
+  content?: Array<TextContent | ImageContent>;
+  tool_calls?: Array<{
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+  }>;
+  tool_call_id?: string;
+};
 export type AiResquestData = {
   model: string;
-  messages: Array<{ role: Role; content: Array<TextContent | ImageContent> }>;
+  messages: Message[];
   tools?: any;
   tool_choice?: any;
 };
@@ -90,14 +99,15 @@ export class Api {
               contents: {
                 type: 'array',
                 description:
-                  '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号换行时拆分成成多个元素',
+                  '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号、换行、发送表情包等适合换句的情况时拆分成成多个元素',
                 items: {
                   type: 'object',
                   properties: {
                     type: {
                       type: 'string',
                       enum: ['text', 'imageUrl'],
-                      description: '发送文字时必须使用text类型，发送图片、表情包时必须使用imageUrl类型',
+                      description:
+                        '发送文字时必须使用text类型，发送图片、表情包时必须使用imageUrl类型',
                     },
                     content: {
                       type: 'string',
