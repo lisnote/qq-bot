@@ -4,8 +4,8 @@ import logger from '@/utils/logger';
 export type Role = 'system' | 'user' | 'assistant' | 'tool';
 export type TextContent = { type: 'text'; text: string };
 export type ImageContent = {
-  type: 'image';
-  source: { type: 'base64'; media_type: 'image/jpg'; data: string };
+  type: 'image_url';
+  image_url: { url: string };
 };
 export type Message = {
   role: Role;

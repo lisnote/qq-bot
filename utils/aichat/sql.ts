@@ -85,7 +85,7 @@ export class Sql {
     const [data] = await this.get('user', userId);
     return data;
   }
-  async insertHistory(userId: string, role: Role, content: Array<TextContent | ImageContent>) {
+  async insertHistory(userId: string, role: Role, content: NonNullable<Message['content']>) {
     const [{ id }]: { id: number }[] = await this.sql`
       INSERT INTO history (userId, role)
       VALUES (${userId}, ${role})
@@ -96,7 +96,7 @@ export class Sql {
       content.map((v) => ({
         historyId: id,
         type: v.type,
-        data: v.type === 'text' ? v.text : v.source.data,
+        data: v.type === 'text' ? v.text : v.image_url.url,
       })),
     );
   }
@@ -147,10 +147,7 @@ export class Sql {
               if (v.type === 'text') {
                 return { type: 'text', text: v.data } as TextContent;
               } else {
-                return {
-                  type: 'image',
-                  source: { data: v.data, media_type: 'image/jpg', type: 'base64' },
-                } as ImageContent;
+                return { type: 'image_url', image_url: { url: v.data } } as ImageContent;
               }
             }),
           } as Message;
