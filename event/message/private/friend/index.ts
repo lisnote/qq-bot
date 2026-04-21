@@ -22,7 +22,7 @@ export default async function ({ aiChat, napcat, data }: EventContext<'message.p
       for (const i in message) {
         const index = Number(i);
         const msg = message[index];
-        napcat.send_msg({
+        await napcat.send_msg({
           user_id: data.user_id,
           message: [msg],
         });
