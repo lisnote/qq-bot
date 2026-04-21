@@ -7,6 +7,10 @@ export default async function handleCommand(ctx: EventContext<'message'>, next: 
   if (!('post_type' in data) || data.post_type !== 'message') return next();
   // 跳过非命令消息
   if (!/^\/[\w\/]+/.test(data.raw_message)) return next();
+  // 跳过群聊中非管理员的指令
+  if (data.message_type === 'group' && !['owner', 'admin'].includes(data.sender.role ?? '')) {
+    return next();
+  }
   // 提取指令与消息
   let command = '';
   const message = data.raw_message
