@@ -1,9 +1,9 @@
-import { SQL, sql } from 'bun';
+import { SQL } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import defaultPrompt from './prompt.md' with { type: 'text' };
-import { Message, ReplyArguments, Role } from './api';
-import { MaybeArray, MakeOptional } from '@/types/utils';
+import { Message, Role } from './api';
+import { MaybeArray } from '@/types/utils';
 
 export type User = { id: string; prompt: string; memory: string };
 export type History = { id: number; userId: string; role: Role };
@@ -114,6 +114,12 @@ export class Sql {
     await this.sql.begin(async (tx) => {
       await tx`DELETE FROM history WHERE id IN ${this.sql(historyIds)}`;
       await tx`DELETE FROM historyDetail WHERE historyId IN ${this.sql(historyIds)}`;
+    });
+  }
+  async clearUserHistory(userId: string) {
+    await this.sql.begin(async (tx) => {
+      await tx`DELETE FROM historyDetail WHERE historyId IN (SELECT id FROM history WHERE userId = ${userId})`;
+      await tx`DELETE FROM history WHERE userId = ${userId}`;
     });
   }
   historyToMessages(rows: { historyId: number; role: Role; type: string; data: string }[]) {

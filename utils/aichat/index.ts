@@ -1,8 +1,3 @@
-import { mkdir } from 'fs/promises';
-import { dirname } from 'path';
-import defaultPrompt from './prompt.md' with { type: 'text' };
-import logger from '@/utils/logger';
-import dayjs from '@/utils/date';
 import { Sql, User } from './sql';
 import { Api } from './api';
 
@@ -71,5 +66,8 @@ export default class AiChat {
   async updateUser(user: Partial<User> & { id: User['id'] }) {
     await this.sql.initUser(user.id);
     await this.sql.update('user', user);
+  }
+  async clearUserHistory(userId: string) {
+    await this.sql.clearUserHistory(userId);
   }
 }
