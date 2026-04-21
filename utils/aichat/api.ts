@@ -90,14 +90,14 @@ export class Api {
               contents: {
                 type: 'array',
                 description:
-                  '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，请将长内容拆分成多个item回复，且单个item不建议超过20字符',
+                  '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号换行时拆分成成多个元素',
                 items: {
                   type: 'object',
                   properties: {
                     type: {
                       type: 'string',
                       enum: ['text', 'imageUrl'],
-                      description: '内容类型：文字或图片URL',
+                      description: '发送文字时必须使用text类型，发送图片、表情包时必须使用imageUrl类型',
                     },
                     content: {
                       type: 'string',

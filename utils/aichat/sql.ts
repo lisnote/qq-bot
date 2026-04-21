@@ -2,19 +2,23 @@ import { SQL, sql } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
 import defaultPrompt from './prompt.md' with { type: 'text' };
-import { Message, Role } from './api';
-import { MaybeArray } from '@/types/utils';
+import { Message, ReplyArguments, Role } from './api';
+import { MaybeArray, MakeOptional } from '@/types/utils';
 
-export type User = { id: string; prompt?: string; memory?: string };
+export type User = { id: string; prompt: string; memory: string };
 export type History = { id: number; userId: string; role: Role };
-export type HistoryDetail = { id: number; type: string; data: string };
+export type HistoryDetail = { id: number; historyId: number; type: string; data: string };
 export type TableMap = {
   user: User;
   history: History;
   historyDetail: HistoryDetail;
 };
+export type InsertMap = {
+  [K in keyof Omit<TableMap, 'user'>]: Omit<TableMap[K], 'id'> & { id?: TableMap[K]['id'] };
+} & { user: User };
+
 export class Sql {
-  sql: SQL;
+  private sql: SQL;
   private constructor(sql: SQL) {
     this.sql = sql;
   }
@@ -45,12 +49,12 @@ export class Sql {
     `;
     return new Sql(sql);
   }
-  async insert<T extends keyof TableMap>(table: T, obj: MaybeArray<TableMap[T]>) {
+  async insert<T extends keyof InsertMap>(table: T, obj: MaybeArray<InsertMap[T]>) {
     await this.sql`INSERT INTO ${this.sql(table)} ${this.sql(obj)}`;
   }
   async remove<T extends keyof TableMap>(table: T, id: MaybeArray<TableMap[T]['id']>) {
     const ids = Array.isArray(id) ? id : [id];
-    await this.sql`DELETE from ${this.sql(table)} WHERE id IN ${ids}`;
+    await this.sql`DELETE from ${this.sql(table)} WHERE id IN ${this.sql(ids)}`;
   }
   async update<T extends keyof TableMap>(
     table: T,
@@ -68,13 +72,16 @@ export class Sql {
     id: MaybeArray<TableMap[T]['id']>,
   ): Promise<TableMap[T][]> {
     const ids = Array.isArray(id) ? id : [id];
-    return this.sql`SELECT * FROM ${this.sql(table)} WHERE id IN ${ids}`;
+    return this.sql`SELECT * FROM ${this.sql(table)} WHERE id IN ${this.sql(ids)}`;
   }
-  async getUser(userId: string): Promise<User> {
+  async initUser(userId: string) {
     await this.sql`
       INSERT OR IGNORE INTO user 
       ${this.sql({ id: userId, prompt: defaultPrompt, memory: '' })};
     `;
+  }
+  async getUser(userId: string): Promise<User> {
+    await this.initUser(userId);
     const [data] = await this.get('user', userId);
     return data;
   }
@@ -84,14 +91,14 @@ export class Sql {
       VALUES (${userId}, ${role})
       RETURNING id
     `;
-    await this.sql`
-      INSERT INTO historyDetail ${this.sql(
-        content.map((v) => ({
-          historyId: id,
-          type: v.type,
-          data: v.type === 'text' ? v.text : v.source.data,
-        })),
-      )}`;
+    await this.insert(
+      'historyDetail',
+      content.map((v) => ({
+        historyId: id,
+        type: v.type,
+        data: v.type === 'text' ? v.text : v.source.data,
+      })),
+    );
   }
   async getHistory(userId: string) {
     const rows: { historyId: number; role: Role; type: string; data: string }[] = await this.sql`
@@ -102,6 +109,12 @@ export class Sql {
       ORDER BY history.id, historyDetail.id;
     `;
     return rows;
+  }
+  async removeHistory(historyIds: number[]) {
+    await this.sql.begin(async (tx) => {
+      await tx`DELETE FROM history WHERE id IN ${this.sql(historyIds)}`;
+      await tx`DELETE FROM historyDetail WHERE historyId IN ${this.sql(historyIds)}`;
+    });
   }
   historyToMessages(rows: { historyId: number; role: Role; type: string; data: string }[]) {
     const messages: Message[] = [];
