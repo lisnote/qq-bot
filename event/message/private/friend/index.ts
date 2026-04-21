@@ -1,5 +1,4 @@
 import { EventContext } from '@/types';
-import { emojiEmotionMap } from '@/utils/aichat/emoji';
 import logger from '@/utils/logger';
 import { SendMessageSegment, Structs } from '@/utils/napcat';
 
@@ -10,16 +9,16 @@ export default async function ({ aiChat, napcat, data }: EventContext<'message.p
     .join(' ');
   if (!text) return;
   await aiChat
-    .ask(data.user_id.toString(), data.sender.nickname, text)
-    .then(async (answer) => {
-      const message: SendMessageSegment[] = answer.text
-        .split(/[。？(……)\n]/)
-        .filter((v) => v.trim())
-        .map((v) => Structs.text(v));
-      const emoji = emojiEmotionMap.get(answer.emoji ?? '');
-      if (emoji) {
-        message.push(Structs.image(emoji.url));
-      }
+    .chat(data.user_id.toString(), data.sender.nickname, text)
+    .then(async (reply) => {
+      const message: SendMessageSegment[] = reply
+        .map((v) => {
+          if (v.type === 'text') {
+            return Structs.text(v.content.replaceAll("\n\n", '\n'));
+          } else {
+            return Structs.image(v.content);
+          }
+        })
       for (const i in message) {
         const index = Number(i);
         const msg = message[index];

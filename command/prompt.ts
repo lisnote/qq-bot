@@ -3,7 +3,7 @@ import { Structs } from '@/utils/napcat';
 
 export default async function (ctx: CommandContext) {
   const { napcat, aiChat, data, message } = ctx;
-  await aiChat.setPrompt(data.user_id.toString(), message);
+  await aiChat.updateUser({ id: data.user_id.toString(), prompt: message });
   await napcat.send_msg({
     user_id: data.user_id,
     group_id: data.message_type === 'group' ? data.group_id : undefined,
