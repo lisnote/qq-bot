@@ -1,7 +1,7 @@
 import { SQL } from 'bun';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
-import defaultPrompt from './prompt.md' with { type: 'text' };
+import character from './prompt/character.md' with { type: 'text' };
 import { Role, TextContent, ImageContent, Message } from './api';
 import { MaybeArray } from '@/types/utils';
 
@@ -77,7 +77,7 @@ export class Sql {
   async initUser(userId: string) {
     await this.sql`
       INSERT OR IGNORE INTO user 
-      ${this.sql({ id: userId, prompt: defaultPrompt, memory: '' })};
+      ${this.sql({ id: userId, prompt: character, memory: '' })};
     `;
   }
   async getUser(userId: string): Promise<User> {

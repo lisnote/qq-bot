@@ -1,9 +1,9 @@
 import { CommandContext } from '@/types';
 import { Structs } from '@/utils/napcat';
-import prompt from '@/utils/aichat/prompt.md' with { type: 'text' };
+import character from '@/utils/aichat/prompt/character.md' with { type: 'text' };
 export default async function (ctx: CommandContext) {
   const { napcat, aiChat, data } = ctx;
-  await aiChat.updateUser({ id: data.user_id.toString(), prompt, memory: '' });
+  await aiChat.updateUser({ id: data.user_id.toString(), prompt: character, memory: '' });
   await aiChat.clearUserHistory(data.user_id.toString());
   await napcat.send_msg({
     user_id: data.user_id,

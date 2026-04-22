@@ -1,5 +1,6 @@
 import dayjs from '@/utils/date';
 import logger from '@/utils/logger';
+import systemFeature from './prompt/systemFeature.md' with { type: 'text' };
 
 export type Role = 'system' | 'user' | 'assistant' | 'tool';
 export type TextContent = { type: 'text'; text: string };
@@ -92,7 +93,7 @@ export class Api {
     memory: string,
     history: Message[],
   ): Promise<ReplyArguments['contents']> {
-    const replacedPrompt = prompt
+    const replacedPrompt = (prompt + '\n\n' + systemFeature)
       .replaceAll('{{user}}', name)
       .replaceAll('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'))
       .replaceAll('{{memory}}', memory);
