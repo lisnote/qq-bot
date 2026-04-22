@@ -34,6 +34,8 @@ export default class AiChat {
     return aiChat;
   }
   async chat(userId: string, userName: string, content: NonNullable<Message['content']>) {
+    // 替换图片为文字
+    content = await this.api.replaceImageToText(content);
     // 获取用户设置
     let { prompt, memory } = await this.sql.getUser(userId);
     const history = await this.sql.getHistory(userId);

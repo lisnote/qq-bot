@@ -176,4 +176,55 @@ ${memory}`;
       .map((v) => v.text)
       .join('\n\n');
   }
+  async replaceImageToText(content: NonNullable<Message['content']>): Promise<TextContent[]> {
+    const imageCount = content.filter((v) => v.type === 'image').length;
+    if (imageCount === 0) return content as TextContent[];
+    const response = await this.request<{ results: string[] }>({
+      history: [
+        {
+          role: 'user',
+          content: [
+            ...content,
+            {
+              type: 'text',
+              text: `本次对话中一共发送了${imageCount}张图片`,
+            },
+          ],
+        },
+      ],
+      prompt: `# 聊天助手-图片识别模块
+
+- 你是一个聊天助手中的图片识别模块，用于识别用户发送的图片中的内容
+- 请结构化地详细描述并输出本次对话中图片中的内容，包括但不限于文字提取、对象识别、场景识别、动作识别等等，并调用vision_analysis_report描述结果`,
+      tools: [
+        {
+          name: 'vision_analysis_report',
+          description: '结构化地输出图片的详细描述',
+          input_schema: {
+            type: 'object',
+            properties: {
+              results: {
+                type: 'array',
+                description: '图片描述列表',
+                items: {
+                  type: 'string',
+                  description: '单张图片的详细描述内容',
+                },
+              },
+            },
+            required: ['results'],
+          },
+        },
+      ],
+      tool_choice: { type: 'tool', name: 'vision_analysis_report' },
+    });
+    const result = response.content.find((v) => v.type === 'tool_use')?.input.results;
+    return content.map((v, index) => {
+      if (v.type === 'text') return v;
+      return {
+        type: 'text',
+        text: `<SystemUserImage>${result?.[index] ?? `image ${index} failed to recognize`}<SystemUserImage>`,
+      };
+    });
+  }
 }
