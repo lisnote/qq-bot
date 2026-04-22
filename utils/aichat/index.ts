@@ -36,9 +36,9 @@ export default class AiChat {
   async chat(userId: string, userName: string, content: NonNullable<Message['content']>) {
     // 获取用户设置
     let { prompt, memory } = await this.sql.getUser(userId);
-    this.sql.insertHistory(userId, 'user', content);
-    // 获取用户聊天记录
     const history = await this.sql.getHistory(userId);
+    await this.sql.insertHistory(userId, 'user', content);
+    // 获取用户聊天记录
     // 聊天记录>200条, 压缩最早的100条到记忆
     const historyIds = Array.from(new Set(history.map((v) => v.historyId)));
     if (historyIds.length > 200) {
@@ -59,7 +59,10 @@ export default class AiChat {
       reply.map((v) =>
         v.type === 'text'
           ? ({ type: 'text', text: v.content } as TextContent)
-          : ({ type: 'image_url', image_url: { url: v.content } } as ImageContent),
+          : ({
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: v.content },
+            } as ImageContent),
       ),
     );
     return reply;

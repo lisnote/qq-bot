@@ -4,8 +4,12 @@ import logger from '@/utils/logger';
 export type Role = 'system' | 'user' | 'assistant' | 'tool';
 export type TextContent = { type: 'text'; text: string };
 export type ImageContent = {
-  type: 'image_url';
-  image_url: { url: string };
+  type: 'image';
+  source: {
+    type: 'base64';
+    media_type: 'image/jpeg';
+    data: string;
+  };
 };
 export type Message = {
   role: Role;
@@ -23,10 +27,14 @@ export type AiResquestData = {
   tools?: any;
   tool_choice?: any;
 };
-export type AiResponseData = {
-  choices: [
-    { message: { role: Role; content: string; tool_calls: [{ function: { arguments: string } }] } },
-  ];
+export type AiResponseData<T = any> = {
+  content: Array<
+    | {
+        type: 'text';
+        text: string;
+      }
+    | { type: 'tool_use'; input: T }
+  >;
 };
 export type ReplyArguments = { contents: Array<{ type: 'text' | 'imageUrl'; content: string }> };
 
@@ -39,7 +47,7 @@ export class Api {
     this.key = key;
     this.model = model;
   }
-  async request({
+  async request<T = any>({
     history,
     prompt,
     tools,
@@ -49,13 +57,14 @@ export class Api {
     prompt?: string;
     tools?: any;
     tool_choice?: any;
-  }): Promise<AiResponseData> {
+  }): Promise<AiResponseData<T>> {
     const body = JSON.stringify({
       model: this.model,
-      messages: [...(prompt ? [{ role: 'system', content: prompt }] : []), ...history],
+      ...(prompt ? { system: prompt } : {}),
+      messages: history,
       tools,
+      max_tokens: 3200,
       tool_choice,
-      max_tokens: 32000,
       stream: false,
     });
     logger.info('ai request', body);
@@ -89,49 +98,54 @@ export class Api {
       .replaceAll('{{memory}}', memory);
     const tools = [
       {
-        type: 'function',
-        function: {
-          name: 'reply',
-          description: '回复用户',
-          parameters: {
-            type: 'object',
-            properties: {
-              contents: {
-                type: 'array',
-                description:
-                  '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号、换行、发送表情包等适合换句的情况时拆分成成多个元素',
-                items: {
-                  type: 'object',
-                  properties: {
-                    type: {
-                      type: 'string',
-                      enum: ['text', 'imageUrl'],
-                      description:
-                        '发送文字时必须使用text类型，发送图片、表情包时必须使用imageUrl类型',
-                    },
-                    content: {
-                      type: 'string',
-                      description: '具体的文字内容或图片链接地址',
-                    },
+        name: 'reply',
+        description: '回复用户',
+        input_schema: {
+          type: 'object',
+          properties: {
+            contents: {
+              type: 'array',
+              description:
+                '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号、换行、发送表情包等适合换句的情况时拆分成成多个元素',
+              items: {
+                type: 'object',
+                properties: {
+                  type: {
+                    type: 'string',
+                    enum: ['text', 'imageUrl'],
+                    description:
+                      '发送文字时必须使用text类型，发送图片、表情包时必须使用imageUrl类型',
                   },
-                  required: ['type', 'content'],
+                  content: {
+                    type: 'string',
+                    description: '具体的文字内容或图片链接地址',
+                  },
                 },
+                required: ['type', 'content'],
               },
             },
-            required: ['contents'],
           },
+          required: ['contents'],
         },
       },
     ];
-    const response = await this.request({
+    const response = await this.request<ReplyArguments>({
       prompt: replacedPrompt,
       history: history,
       tools,
-      tool_choice: { type: 'function', name: 'reply' },
+      tool_choice: { type: 'tool', name: 'reply' },
     });
     return Promise.resolve()
-      .then(() => JSON.parse(response.choices[0].message.tool_calls[0].function.arguments).contents)
-      .catch((e) => [{ type: 'text', content: response.choices[0].message.content }])
+      .then(() => {
+        const toolResp = response.content.find((v) => v.type === 'tool_use')?.input.contents;
+        if (toolResp) {
+          return toolResp;
+        } else {
+          return response.content
+            .filter((v) => v.type === 'text')
+            .map((v) => ({ type: 'text', content: v.text })) as ReplyArguments['contents'];
+        }
+      })
       .catch((e) => {
         logger.error(e);
         throw e;
@@ -156,6 +170,9 @@ ${memory}`;
       history: [...history, { role: 'user', content: [{ type: 'text', text: '开始总结记忆' }] }],
       prompt,
     });
-    return response.choices[0].message.content;
+    return response.content
+      .filter((v) => v.type === 'text')
+      .map((v) => v.text)
+      .join('\n\n');
   }
 }

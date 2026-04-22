@@ -96,7 +96,7 @@ export class Sql {
       content.map((v) => ({
         historyId: id,
         type: v.type,
-        data: v.type === 'text' ? v.text : v.image_url.url,
+        data: v.type === 'text' ? v.text : v.source.data,
       })),
     );
   }
@@ -147,7 +147,10 @@ export class Sql {
               if (v.type === 'text') {
                 return { type: 'text', text: v.data } as TextContent;
               } else {
-                return { type: 'image_url', image_url: { url: v.data } } as ImageContent;
+                return {
+                  type: 'image',
+                  source: { type: 'base64', media_type: 'image/jpeg', data: v.data },
+                } as ImageContent;
               }
             }),
           } as Message;
