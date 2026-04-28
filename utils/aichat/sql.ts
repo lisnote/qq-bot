@@ -158,22 +158,17 @@ export class Sql {
           return [
             {
               role: 'assistant',
-              tool_calls: [
+              content: [
                 {
-                  id: 'call_' + item[0].historyId,
-                  type: 'function',
-                  function: {
-                    name: 'reply',
-                    arguments: JSON.stringify({
-                      content: item.map((v) => {
-                        return { type: v.type === 'text' ? 'text' : 'imageUrl', content: v.data };
-                      }),
+                  type: 'text',
+                  text: JSON.stringify({
+                    content: item.map((v) => {
+                      return { type: v.type === 'text' ? 'text' : 'imageUrl', content: v.data };
                     }),
-                  },
+                  }),
                 },
               ],
             } as Message,
-            { role: 'tool', tool_call_id: 'call_' + item[0].historyId } as Message,
           ];
         }
       })
