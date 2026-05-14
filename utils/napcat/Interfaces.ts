@@ -1305,6 +1305,7 @@ export type WSSendReturn = {
     url: string;
     file_size: string;
     file_name: string;
+    base64: string;
   };
   get_image: WSSendReturn['get_record'];
   can_send_image: { yes: true };
