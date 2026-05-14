@@ -6,12 +6,13 @@ import setupAiChat from './middleware/setupAiChat';
 import messageLog from './middleware/messageLog';
 import handleCommand from './middleware/handleCommand';
 import handleEvent from './middleware/handleEvent';
+import config from '@/config.yaml';
 
 const napcat = new NCWebsocket({
-  host: process.env.HOST!,
-  port: Number(process.env.PORT!),
-  protocol: 'ws',
-  accessToken: process.env.TOKEN!,
+  host: config.onebot.host,
+  port: config.onebot.port,
+  protocol: config.onebot.protocol,
+  accessToken: config.onebot.token,
 });
 
 // 中间件列表

@@ -1,36 +1,24 @@
 import { Sql, User } from './sql';
-import { Api, ImageContent, Message, TextContent } from './api';
+import { Api, ModelInfo, ImageContent, Message, TextContent } from './api';
 
 export default class AiChat {
   private api: Api;
   private sql: Sql;
-  private constructor({
-    sql,
-    url,
-    key,
-    model,
-  }: {
-    sql: Sql;
-    url: string;
-    key: string;
-    model: string;
-  }) {
+  private constructor({ sql, chat, vision }: { sql: Sql; chat: ModelInfo; vision: ModelInfo }) {
     this.sql = sql;
-    this.api = new Api(url, key, model);
+    this.api = new Api({ chat, vision });
   }
   static async create({
     sqlitePath,
-    url,
-    key,
-    model,
+    chat,
+    vision,
   }: {
     sqlitePath: string;
-    url: string;
-    key: string;
-    model: string;
+    chat: ModelInfo;
+    vision: ModelInfo;
   }) {
     const sql = await Sql.create(sqlitePath);
-    const aiChat = new AiChat({ sql, url, key, model });
+    const aiChat = new AiChat({ sql, chat, vision });
     return aiChat;
   }
   async chat(userId: string, userName: string, content: NonNullable<Message['content']>) {

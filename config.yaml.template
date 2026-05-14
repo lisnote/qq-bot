@@ -1,0 +1,19 @@
+onebot:
+  host: 127.0.0.1
+  port: 3001
+  token: _l2MuUkUDXmVXiDD
+  protocol: ws
+aichat:
+  chat:
+    url: http://127.0.0.1:3000/v1/messages
+    key: sk-F1gjOTaqKLng9qwRdzaNNR97Q7fPqB9E6K28WFNjxBKGYqu0
+    model: kimi-k2.6
+  vision:
+    url: http://127.0.0.1:3000/v1/messages
+    key: sk-F1gjOTaqKLng9qwRdzaNNR97Q7fPqB9E6K28WFNjxBKGYqu0
+    model: kimi-k2.6
+filter:
+  group:
+    - 123456
+  private:
+    - 123456

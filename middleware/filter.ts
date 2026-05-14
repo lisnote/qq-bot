@@ -1,13 +1,8 @@
 import { EventContext, Next } from '@/types';
+import config from '@/config.yaml';
 
-const privateList =
-  process.env.PRIVATE_FILTER?.split(',')
-    .filter((v) => v)
-    .map((v) => Number(v.trim())) || [];
-const groupList =
-  process.env.GROUP_FILTER?.split(',')
-    .filter((v) => v)
-    .map((v) => Number(v.trim())) || [];
+const privateList = Array.isArray(config.filter?.private) ? config.filter.private : [];
+const groupList = Array.isArray(config.filter?.group) ? config.filter.group : [];
 
 export default async function filter({ data }: EventContext, next: Next) {
   // 跳过非消息事件

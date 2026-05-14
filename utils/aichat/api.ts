@@ -2,6 +2,11 @@ import dayjs from '@/utils/date';
 import logger from '@/utils/logger';
 import systemFeature from './prompt/systemFeature.md' with { type: 'text' };
 
+export type ModelInfo = {
+  url: string;
+  key: string;
+  model: string;
+};
 export type Role = 'system' | 'user' | 'assistant' | 'tool';
 export type TextContent = { type: 'text'; text: string };
 export type ImageContent = {
@@ -40,27 +45,27 @@ export type AiResponseData<T = any> = {
 export type ReplyArguments = { contents: Array<{ type: 'text' | 'imageUrl'; content: string }> };
 
 export class Api {
-  private url: string;
-  private key: string;
-  private model: string;
-  constructor(url: string, key: string, model: string) {
-    this.url = url;
-    this.key = key;
-    this.model = model;
+  private chatModel: ModelInfo;
+  private visionModel: ModelInfo;
+  constructor({ chat, vision }: { chat: ModelInfo; vision: ModelInfo }) {
+    this.chatModel = chat;
+    this.visionModel = vision;
   }
   async request<T = any>({
+    model,
     history,
     prompt,
     tools,
     tool_choice,
   }: {
+    model: ModelInfo;
     history: Message[];
     prompt?: string;
     tools?: any;
     tool_choice?: any;
   }): Promise<AiResponseData<T>> {
     const body = JSON.stringify({
-      model: this.model,
+      model: model.model,
       ...(prompt ? { system: prompt } : {}),
       messages: history,
       tools,
@@ -69,10 +74,10 @@ export class Api {
       stream: false,
     });
     logger.info('ai request', body);
-    return fetch(this.url, {
+    return fetch(model.url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.key}`,
+        Authorization: `Bearer ${model.key}`,
         'Content-Type': 'application/json',
       },
       body,
@@ -131,6 +136,7 @@ export class Api {
       },
     ];
     const response = await this.request<ReplyArguments>({
+      model: this.chatModel,
       prompt: replacedPrompt,
       history: history,
       tools,
@@ -168,6 +174,7 @@ export class Api {
 
 ${memory}`;
     const response = await this.request({
+      model: this.chatModel,
       history: [...history, { role: 'user', content: [{ type: 'text', text: '开始总结记忆' }] }],
       prompt,
     });
@@ -180,6 +187,7 @@ ${memory}`;
     const imageCount = content.filter((v) => v.type === 'image').length;
     if (imageCount === 0) return content as TextContent[];
     const response = await this.request<{ results: string[] }>({
+      model: this.visionModel,
       history: [
         {
           role: 'user',
