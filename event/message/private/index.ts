@@ -1,22 +1,23 @@
 import { EventContext } from '@/types';
 import { Message } from '@/utils/aichat/api';
 import logger from '@/utils/logger';
-import { ImageSegment, SendMessageSegment, Structs, TextSegment } from '@/utils/napcat';
+import { SendMessageSegment, Structs } from '@/utils/napcat';
 
 export default async function ({ aiChat, napcat, data }: EventContext<'message.private'>) {
-  const segmentList = data.message.filter((item) => ['text', 'image'].includes(item.type)) as Array<
-    TextSegment | ImageSegment
-  >;
+  const segmentList = data.message.filter((item) => ['text', 'image'].includes(item.type));
   const messages: NonNullable<Message['content']> = [];
   if (!segmentList.length) return;
   for (const segment of segmentList) {
     if (segment.type === 'text') {
       messages.push({ type: 'text', text: segment.data.text });
-    } else {
-      const file = await napcat.get_file({ file: segment.data.file });
+    } else if (segment.type === 'image') {
+      const base64 = await fetch(segment.data.url)
+        .then((v) => v.arrayBuffer())
+        .then((v) => Buffer.from(v).toBase64())
+        .catch(() => napcat.get_file({ file: segment.data.file }).then((v) => v.base64));
       messages.push({
         type: 'image',
-        source: { type: 'base64', media_type: 'image/jpeg', data: file.base64 },
+        source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
       });
     }
   }
