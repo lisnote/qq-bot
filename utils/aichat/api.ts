@@ -146,7 +146,19 @@ export class Api {
       .then(() => {
         const toolResp = response.content.find((v) => v.type === 'tool_use')?.input.contents;
         if (toolResp) {
-          return toolResp;
+          return toolResp
+            .map((v) => {
+              return v.content
+                .split('\n')
+                .filter((v) => v)
+                .map((item) => {
+                  const type = /^https?:\/\/.*\.(jpg|png|webp|gif)$/.test(item)
+                    ? 'imageUrl'
+                    : 'text';
+                  return { type, content: item };
+                });
+            })
+            .flat() as ReplyArguments['contents'];
         } else {
           return response.content
             .filter((v) => v.type === 'text')
