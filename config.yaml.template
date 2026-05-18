@@ -12,7 +12,12 @@ aichat:
     url: http://127.0.0.1:3000/v1/messages
     key: sk-F1gjOTaqKLng9qwRdzaNNR97Q7fPqB9E6K28WFNjxBKGYqu0
     model: kimi-k2.6
-filter:
+blackList:
+  group:
+    - 123456
+  private:
+    - 123456
+whiteList:
   group:
     - 123456
   private:
