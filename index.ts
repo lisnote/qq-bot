@@ -7,6 +7,7 @@ import messageLog from './middleware/messageLog';
 import handleCommand from './middleware/handleCommand';
 import handleEvent from './middleware/handleEvent';
 import config from '@/config.yaml';
+import rockKingdom from './task/rocoKingdom';
 
 const napcat = new NCWebsocket({
   host: config.onebot.host,
@@ -38,6 +39,18 @@ async function middlewareCompose(middleware: Middleware[], context: EventContext
 napcat.on('*', async ({ event, context }) => {
   const ctx = { napcat, data: context, event } as EventContext;
   await middlewareCompose(middlewareList, ctx);
+});
+
+// 任务执行
+napcat.connect().then(() => {
+  const taskList = [rockKingdom];
+  for (const task of taskList) {
+    try {
+      task({ napcat });
+    } catch (e) {
+      logger.error('任务执行失败', task);
+    }
+  }
 });
 
 await napcat.connect();
