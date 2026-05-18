@@ -15,10 +15,10 @@ aichat:
 blackList:
   group:
     - 123456
-  private:
+  user:
     - 123456
 whiteList:
   group:
     - 123456
-  private:
+  user:
     - 123456
