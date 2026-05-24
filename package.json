@@ -12,7 +12,7 @@
   },
   "private": true,
   "scripts": {
-    "dev": "nodemon -e ts --exec \"bun index.ts\"",
+    "dev": "nodemon -e ts,yaml --exec \"bun index.ts\"",
     "start": "bun index.ts"
   },
   "type": "module",
