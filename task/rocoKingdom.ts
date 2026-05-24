@@ -3,36 +3,38 @@ import config from '@/config.yaml';
 import dayjs from '@/utils/date';
 import logger from '@/utils/logger';
 
-const userList = config.task.rocoKingdom.user;
+const userList = Array.isArray(config.task?.rocoKingdom?.user) ? config.task.rocoKingdom.user : [];
 
 let nextTime = Date.now();
 let lastText = '';
 export default async function rockKingdom({ napcat }: { napcat: NCWebsocket }) {
-  autoPush(napcat).catch(logger.error);
-  let lock = false;
-  setInterval(async () => {
-    if (lock) return;
-    lock = true;
-    await autoPush(napcat)
-      .catch(logger.error)
-      .finally(() => (lock = false));
-  }, 60000);
+  task(napcat);
+  setInterval(async () => task(napcat), 60000);
 }
 
-async function autoPush(napcat: NCWebsocket) {
-  if (nextTime > Date.now() && dayjs().hour() > 8) return;
+let lock = false;
+async function task(napcat: NCWebsocket) {
+  if (lock || !userList.length) return;
+  lock = true;
+  await pushMsg(napcat)
+    .catch(logger.error)
+    .finally(() => (lock = false));
+}
+
+async function pushMsg(napcat: NCWebsocket) {
+  if (nextTime > Date.now() || dayjs().hour() < 8) return;
   const merchantInfo = await getMerchantInfo();
   if (!merchantInfo) return;
   nextTime = merchantInfo
     .filter((item) => 14400000 >= item.endTime - item.startTime)
-    .sort((a, b) => a.endTime - b.endTime)[0].endTime;
+    .sort((a, b) => a.endTime - b.endTime)[0]?.endTime;
   const goods = merchantInfo.map((item) => dayjs(item.endTime).format('HH:mm') + ' ' + item.name);
   const text = '洛克王国.远行商人\n' + goods.join('\n');
 
   if (text !== lastText) {
     lastText = text;
+    logger.info('洛克王国.远行商人 | ' + goods.join(' | '));
     for (const user of userList) {
-      logger.info('洛克王国.远行商人 | ' + goods.join(' | '));
       await napcat.send_msg({
         user_id: user,
         message: [{ type: 'text', data: { text: text } }],
