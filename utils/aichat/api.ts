@@ -42,7 +42,7 @@ export type AiResponseData<T = any> = {
     | { type: 'tool_use'; input: T }
   >;
 };
-export type ReplyArguments = { contents: Array<{ type: 'text' | 'imageUrl'; content: string }> };
+export type ReplyArguments = { list: Array<{ type: 'text' | 'imageUrl'; content: string }> };
 
 export class Api {
   private chatModel: ModelInfo;
@@ -97,7 +97,7 @@ export class Api {
     prompt: string,
     memory: string,
     history: Message[],
-  ): Promise<ReplyArguments['contents']> {
+  ): Promise<ReplyArguments['list']> {
     const replacedPrompt = (prompt + '\n\n' + systemFeature)
       .replaceAll('{{user}}', name)
       .replaceAll('{{time}}', dayjs().format('YYYY-MM-DD HH:mm:ss'))
@@ -109,7 +109,7 @@ export class Api {
         input_schema: {
           type: 'object',
           properties: {
-            contents: {
+            list: {
               type: 'array',
               description:
                 '回复给用户的内容列表，每个元素为单条消息，为模拟用户回复，必须在句号、换行、发送表情包等适合换句的情况时拆分成成多个元素',
@@ -131,7 +131,7 @@ export class Api {
               },
             },
           },
-          required: ['contents'],
+          required: ['list'],
         },
       },
     ];
@@ -144,7 +144,7 @@ export class Api {
     });
     return Promise.resolve()
       .then(() => {
-        const toolResp = response.content.find((v) => v.type === 'tool_use')?.input.contents;
+        const toolResp = response.content.find((v) => v.type === 'tool_use')?.input.list;
         if (toolResp) {
           return toolResp
             .map((v) => {
@@ -158,11 +158,11 @@ export class Api {
                   return { type, content: item };
                 });
             })
-            .flat() as ReplyArguments['contents'];
+            .flat() as ReplyArguments['list'];
         } else {
           return response.content
             .filter((v) => v.type === 'text')
-            .map((v) => ({ type: 'text', content: v.text })) as ReplyArguments['contents'];
+            .map((v) => ({ type: 'text', content: v.text })) as ReplyArguments['list'];
         }
       })
       .catch((e) => {

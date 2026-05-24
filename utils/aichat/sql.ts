@@ -126,7 +126,7 @@ export class Sql {
     rows: { historyId: number; role: Role; type: string; data: string }[],
   ): Message[] {
     const grouped = rows.reduce(
-      (pre, current, index) => {
+      (pre, current) => {
         if (
           pre[pre.length - 1]?.[pre[pre.length - 1].length - 1]?.historyId === current.historyId
         ) {
@@ -162,7 +162,7 @@ export class Sql {
                 {
                   type: 'text',
                   text: JSON.stringify({
-                    content: item.map((v) => {
+                    list: item.map((v) => {
                       return { type: v.type === 'text' ? 'text' : 'imageUrl', content: v.data };
                     }),
                   }),
