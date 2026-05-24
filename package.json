@@ -17,6 +17,10 @@
   },
   "type": "module",
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.79",
+    "@ai-sdk/google": "^3.0.79",
+    "@ai-sdk/openai": "^3.0.65",
+    "ai": "^6.0.191",
     "dayjs": "^1.11.19",
     "nanoid": "^5.1.7",
     "rotating-file-stream": "^3.2.9",
