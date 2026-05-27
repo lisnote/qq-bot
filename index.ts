@@ -1,7 +1,6 @@
 import { NCWebsocket } from '@/utils/napcat';
 import logger from '@/utils/logger';
 import { EventContext, Middleware } from './types';
-import filter from './middleware/filter';
 import setupAiChat from './middleware/setupAiChat';
 import messageLog from './middleware/messageLog';
 import handleCommand from './middleware/handleCommand';
@@ -18,7 +17,6 @@ const napcat = new NCWebsocket({
 
 // 中间件列表
 const middlewareList = [
-  filter,
   setupAiChat,
   messageLog,
   handleCommand,

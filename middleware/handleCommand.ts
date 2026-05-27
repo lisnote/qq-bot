@@ -1,4 +1,5 @@
 import { CommandContext, EventContext, Next } from '@/types';
+import { isAuthCommand } from '@/utils/auth';
 import logger from '@/utils/logger';
 
 export default async function handleCommand(ctx: EventContext<'message'>, next: Next) {
@@ -7,10 +8,6 @@ export default async function handleCommand(ctx: EventContext<'message'>, next: 
   if (!('post_type' in data) || data.post_type !== 'message') return next();
   // 跳过非命令消息
   if (!/^\/[\w\/]+/.test(data.raw_message)) return next();
-  // 跳过群聊中非管理员的指令
-  if (data.message_type === 'group' && !['owner', 'admin'].includes(data.sender.role ?? '')) {
-    return next();
-  }
   // 提取指令与消息
   let command = '';
   const message = data.raw_message
@@ -22,11 +19,10 @@ export default async function handleCommand(ctx: EventContext<'message'>, next: 
 
   // 导入指令模块
   const module = await import(`@/command${command}`).catch(() => undefined);
-  if (module?.default) {
+  if (module?.default && isAuthCommand(command, data)) {
     // 执行指令
     const commandContext: CommandContext = Object.assign(ctx, { command, message });
     await module.default(commandContext)?.catch?.(logger.error);
-    return;
   } else {
     // 指令不存在
     await next();

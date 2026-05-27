@@ -12,16 +12,6 @@ aichat:
     url: http://127.0.0.1:3000/v1/messages
     key: sk-F1gjOTaqKLng9qwRdzaNNR97Q7fPqB9E6K28WFNjxBKGYqu0
     model: kimi-k2.6
-blackList:
-  group:
-    - 123456
-  user:
-    - 123456
-whiteList:
-  group:
-    - 123456
-  user:
-    - 123456
 command:
   genImage:
     url: http://127.0.0.1:3000/v1
@@ -32,3 +22,15 @@ task:
     key: sk-ba042e079cf9ccb30e72b3d5af458f45
     user:
       - 123456
+auth:
+  group:
+    123456:
+      default:
+        allow: ['/command/genImage']
+  private:
+    admin:
+      user: [123456]
+      allow: ['/']
+    default:
+      allow: ['/event/message/private','/command/genImage']
+
