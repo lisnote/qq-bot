@@ -22,6 +22,11 @@ whiteList:
     - 123456
   user:
     - 123456
+command:
+  genImage:
+    url: http://127.0.0.1:3000/v1
+    key: sk-F1gjOTaqKLng9qwRdzaNNR97Q7fPqB9E6K28WFNjxBKGYqu0
+    model: bytedance-seed/seedream-4.5
 task:
   rocoKingdom:
     key: sk-ba042e079cf9ccb30e72b3d5af458f45
