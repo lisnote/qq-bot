@@ -8,6 +8,7 @@ const userList = Array.isArray(config.task?.rocoKingdom?.user) ? config.task.roc
 let nextTime = Date.now();
 let lastText = '';
 export default async function rockKingdom({ napcat }: { napcat: NCWebsocket }) {
+  if (!userList.length) return;
   task(napcat);
   setInterval(async () => task(napcat), 60000);
 }

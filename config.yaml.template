@@ -20,8 +20,7 @@ command:
 task:
   rocoKingdom:
     key: sk-ba042e079cf9ccb30e72b3d5af458f45
-    user:
-      - 123456
+    user: [123456]
 auth:
   group:
     123456:
